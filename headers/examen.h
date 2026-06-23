@@ -27,10 +27,11 @@ int ejercicioIgual(generic e1, generic e2);
 	     Examen
 ***********************************/
 constexpr int kDefaultPuntosTotales = 10;
-constexpr int kDefaultMinimoDeAciertos = 1;
+constexpr int kDefaultMinimoDeReactivos= 1;
 typedef struct Examen{
 	int Puntos;
 	int Aciertos;
+	int NumeroReactivos;
 	float Calificacion;
 	string Titulo;
 	string Alumno;
@@ -38,11 +39,13 @@ typedef struct Examen{
 	Node *Reactivos;
 } Examen;
 
-Examen *newExamen(string tit, string arch);
+Examen *newExamen(string arch);
 void delExamen(Examen *ex);
 
-Examen *exCargar(string arch);
+Examen *examenCargar(string arch);
+int examenGuardar(Examen *ex);
 
+void printExamen(Examen *ex);
 
 /***********************************
 	     General

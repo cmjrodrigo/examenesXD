@@ -113,7 +113,7 @@ int insert_after(Node *root, generic newVal, generic refVal,
 
 void printLinkedList(Node *root, void (*dataPrint)(generic d))
 {
-	Node *curr = root;
+	Node *curr = back(root);
 	while(curr != nullptr){
 		dataPrint(curr->data);
 		curr = curr->head;

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 /***********************************
 	     Ejercicios
@@ -25,12 +26,13 @@ void delEjercicio(generic ej)
 
 void printEjercicio(generic ej)
 {
-	printf("PREGUNTA:\n"
-		"\t%s\n", ((Ejercicio *)ej)->Pregunta);
+	printf(
+		". %s\n", ((Ejercicio *)ej)->Pregunta);
 
 	for(int i = 0; i < kDefaultRespuestasPorPregunta; i++)
 		printf("\t%c:"
 			"\t%s\n", 'A' + i, ((Ejercicio *)ej)->Respuesta[i]);
+	printf("\n");
 }
 
 int ejercicioIgual(generic e1, generic e2)
@@ -49,14 +51,15 @@ int ejercicioIgual(generic e1, generic e2)
 	     Examen
 ***********************************/
 
-Examen *newExamen(string tit, string arch)
+Examen *newExamen(string arch)
 {
 	Examen *ex = (Examen *) calloc(1, sizeof(Examen));
 
 	ex->Puntos = kDefaultPuntosTotales;
-	ex->Aciertos = kDefaultMinimoDeAciertos;
+	ex->Aciertos = 0;
+	ex->NumeroReactivos = kDefaultMinimoDeReactivos;
 	ex->Calificacion = 0.0f;
-	ex->Titulo = strdup(tit);
+	ex->Titulo = nullptr;
 	ex->Alumno = nullptr;
 	ex->Archivo = arch;
 	ex->Reactivos = nullptr;
@@ -67,13 +70,94 @@ void delExamen(Examen *ex)
 {
 	free(ex->Titulo);
 	free(ex->Alumno);
-	free(ex->Archivo);
 	dNodeList(ex->Reactivos, delEjercicio);
 }
 
-Examen *exCargar(string arch)
+Examen *examenCargar(string arch)
 {
+	Examen *ex = newExamen(arch);
+	FILE *f = fopen(arch, "r");
+
+	char buff[5][512] = {0};
+	
+	//Metadatos
+	fscanf(f,
+		"%d\n%d\n%f\n%[^\n]\n%[^\n]\n",
+		&ex->Puntos, &ex->Aciertos, &ex->Calificacion,
+		buff[0], buff[1]);
+	ex->Titulo = strdup(buff[0]);
+	ex->Alumno = strdup(buff[1]);
+	memset(buff, 0, sizeof(buff));
+
+	while(fscanf(f, "%[^\n]\n%[^\n]\n%[^\n]\n%[^\n]\n%[^\n]\n",
+			buff[0], buff[1], buff[2], buff[3], buff[4]) != EOF)
+	{
+		if(ex->Reactivos == nullptr){
+		//Crea nuevo nodo raíz a base de un nuevo ejercicio 
+		//que se inicializa con los buffers del texto del documento
+			ex->Reactivos = newNode(
+					(generic)newEjercicio(buff[0], (string[]){
+						buff[1], buff[2],
+						buff[3], buff[4]}),
+					nullptr, nullptr);
+		} else{
+		//Empuja un nuevo nodo en la lista de reactivos basado
+		//en un ejercicio inicializado de acuerdo a los buffers
+		//de texto del documento
+			push_front(ex->Reactivos, newNode(
+				(generic)newEjercicio(buff[0], (string[]){
+					buff[1], buff[2],
+					buff[3], buff[4]}),
+				nullptr, nullptr));
+		}
+		memset(buff, 0, sizeof(buff));
+	}
+
+	//Reactivos
+	fclose(f);
+	return ex;
 }
+
+int examenGuardar(Examen *ex)
+{
+	FILE *f = fopen(ex->Archivo, "w+");
+
+	//Metadatos
+	fprintf(f,
+		"%d\n%d\n%f\n%s\n%s\n",
+		ex->Puntos, ex->Aciertos, ex->Calificacion,
+		ex->Titulo, ex->Alumno);
+
+	//Reactivos
+	Node *curr = back(ex->Reactivos);
+	while(curr != nullptr){
+		fprintf(f, "%s\n", ((Ejercicio *)curr->data)->Pregunta);
+		for(int i = 0; i < kDefaultRespuestasPorPregunta; i++)
+			fprintf(f, "%s\n", ((Ejercicio *)curr->data)->Respuesta[i]);
+		curr = curr->head;
+	}
+	fclose(f);
+	return 1;
+}
+
+void printExamen(Examen *ex)
+{
+	printf(
+		"-------------------------------------------------\n"
+		"%s\n"
+		"-------------------------------------------------\n"
+		"Alumno: %s\n"
+		"Puntos: %d/%d         Calificacion: %.1f\n"
+		"-------------------------------------------------\n"
+		"PREGUNTAS:                                     \n\n",
+		ex->Titulo,
+		ex->Alumno,
+		ex->Aciertos, ex->Puntos,    ex->Calificacion);
+
+	if(ex->Reactivos != nullptr)
+		printLinkedList(ex->Reactivos, printEjercicio);
+}
+
 
 
 /***********************************

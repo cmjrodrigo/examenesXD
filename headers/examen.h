@@ -1,26 +1,30 @@
-#pragma once
-#include <string>
+#ifndef EXAM_H
+#define EXAM_H
 #include "linked_list.h"
 
+typedef char * string;
 
-constexpr int RespuestasPorPregunta {4};
+constexpr int RespuestasPorPregunta = 4;
 
-struct Ejercicio{
-	std::string Pregunta{};
-	std::string Respuesta[RespuestasPorPregunta]{"NA"};
-};
+typedef struct Ejercicio{
+	string Pregunta;
+	string Respuesta;
+} Ejercicio;
 
-constexpr int DefaultPuntosTotales {10};
-struct Examen{
-	int Puntos{DefaultPuntosTotales};
-	int Aciertos{0};
-	int Calificacion{0};
-	std::string Titulo{};
-	std::string Alumno{};
-	std::string Archivo{};
-	Node<Ejercicio> Reactivos;
-};
+constexpr int DefaultPuntosTotales =10;
+
+typedef struct Examen{
+	int Puntos;
+	int Aciertos;
+	int Calificacion;
+	string Titulo;
+	string Alumno;
+	string Archivo;
+	Node Reactivos;
+} Examen;
 
 void generarExamen();
 void modificarExamen();
 void aplicarExamen();
+
+#endif

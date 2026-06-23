@@ -9,7 +9,7 @@ typedef struct Node{
 	struct Node *tail;
 }Node;
 
-typedef void(*dataDeleteFunc)(generic );
+typedef void(*dataDeleteFunc)(generic);
 
 Node *newNode(generic data, Node *t, Node *h);
 void dNode(Node *n, dataDeleteFunc f);
@@ -29,6 +29,6 @@ long long size(Node *root);
 int insert_after(Node *root, generic newVal, generic refVal,
 		int (*dataCompare)(generic v1, generic v2));
 
-void printLinkedList(Node *root, void (*dataPrint)(generic d));
+void printLinkedList(Node *root, void (*dataPrint)(generic d, int opt), int opt);
 
 #endif

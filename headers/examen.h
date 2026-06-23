@@ -12,12 +12,17 @@ constexpr int kDefaultRespuestasPorPregunta = 4;
 typedef struct Ejercicio{
 	string Pregunta;
 	string Respuesta[kDefaultRespuestasPorPregunta];
+	int Correcta;
+	int Ingresada;
 } Ejercicio;
 
-Ejercicio *newEjercicio(string p, string r[kDefaultRespuestasPorPregunta]);
+Ejercicio *newEjercicio(string p, string r[kDefaultRespuestasPorPregunta], int c);
 void delEjercicio(void *ej);
 
-void printEjercicio(generic ej);
+constexpr int OPT_PROFESOR = 0;
+constexpr int OPT_ALUMNO = 1;
+
+void printEjercicio(generic ej, int opt);
 
 int ejercicioIgual(generic e1, generic e2);
 
@@ -26,12 +31,9 @@ int ejercicioIgual(generic e1, generic e2);
 /***********************************
 	     Examen
 ***********************************/
-constexpr int kDefaultPuntosTotales = 10;
-constexpr int kDefaultMinimoDeReactivos= 1;
 typedef struct Examen{
 	int Puntos;
 	int Aciertos;
-	int NumeroReactivos;
 	float Calificacion;
 	string Titulo;
 	string Alumno;
@@ -45,7 +47,9 @@ void delExamen(Examen *ex);
 Examen *examenCargar(string arch);
 int examenGuardar(Examen *ex);
 
-void printExamen(Examen *ex);
+void printExamen(Examen *ex, int opt);
+
+void examenCalificar(Examen *ex);
 
 /***********************************
 	     General

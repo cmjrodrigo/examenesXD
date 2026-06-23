@@ -7,44 +7,54 @@
 /***********************************
 	     Ejercicios
 ***********************************/
-Ejercicio *newEjercicio(string p, string r[kDefaultRespuestasPorPregunta])
+Ejercicio *newEjercicio(string p, string r[kDefaultRespuestasPorPregunta], int c)
 {
 	Ejercicio *ej = (Ejercicio *) calloc(1, sizeof(Ejercicio));
 	ej->Pregunta = strdup(p);
 	for(int i = 0; i < kDefaultRespuestasPorPregunta; i++)
 		ej->Respuesta[i] = strdup(r[i]);
+	ej->Correcta = c;
+	ej->Ingresada = 0;
 	return ej;
 }
 
 void delEjercicio(generic ej)
 {
-	free(((Ejercicio *)ej)->Pregunta);
+	Ejercicio *curr = (Ejercicio *)ej;
+	free(curr->Pregunta);
 	for(int i = 0; i < kDefaultRespuestasPorPregunta; i++)
-		free(((Ejercicio *) ej)->Respuesta[i]);
-	free(ej);
+		free(curr->Respuesta[i]);
+	free(curr);
 }
 
-void printEjercicio(generic ej)
+void printEjercicio(generic ej, int opt)
 {
-	printf(
-		". %s\n", ((Ejercicio *)ej)->Pregunta);
+	Ejercicio *curr = (Ejercicio *)ej;
+	printf(". %s\n", curr->Pregunta);
+
+	if(opt == OPT_PROFESOR){
+		printf("(Respuesta correcta: %s)\n", curr->Respuesta[curr->Correcta - 1]);
+		printf("(Respuesta ingresada: %s)\n", ((curr->Ingresada - 1) < 0) ? 
+				"Sin responder" : curr->Respuesta[curr->Ingresada - 1]);
+	}
 
 	for(int i = 0; i < kDefaultRespuestasPorPregunta; i++)
-		printf("\t%c:"
-			"\t%s\n", 'A' + i, ((Ejercicio *)ej)->Respuesta[i]);
+		printf("\t%c:\t%s\n", 'A' + i, curr->Respuesta[i]);
 	printf("\n");
 }
 
 int ejercicioIgual(generic e1, generic e2)
 {
-	bool c1 = !strcmp(((Ejercicio *)e1)->Pregunta, ((Ejercicio *) e2)->Pregunta);
+	Ejercicio *curr1 = (Ejercicio *)e1;
+	Ejercicio *curr2 = (Ejercicio *)e2;
+	bool c1 = !strcmp(curr1->Pregunta, curr2->Pregunta);
 	bool c2 = true;
 	for(int i = 0; i < kDefaultRespuestasPorPregunta; i++){
-		if(strcmp(((Ejercicio *)e1)->Respuesta[i], ((Ejercicio *)e2)->Respuesta[i])){
+		if(strcmp(curr1->Respuesta[i], curr2->Respuesta[i])){
 			c2 = false;
 		}
 	}
-	return c1 && c2;
+	return c1 && c2 && (curr1->Respuesta == curr2->Respuesta);
 }
 
 /***********************************
@@ -55,9 +65,8 @@ Examen *newExamen(string arch)
 {
 	Examen *ex = (Examen *) calloc(1, sizeof(Examen));
 
-	ex->Puntos = kDefaultPuntosTotales;
+	ex->Puntos = 0;
 	ex->Aciertos = 0;
-	ex->NumeroReactivos = kDefaultMinimoDeReactivos;
 	ex->Calificacion = 0.0f;
 	ex->Titulo = nullptr;
 	ex->Alumno = nullptr;
@@ -89,8 +98,10 @@ Examen *examenCargar(string arch)
 	ex->Alumno = strdup(buff[1]);
 	memset(buff, 0, sizeof(buff));
 
-	while(fscanf(f, "%[^\n]\n%[^\n]\n%[^\n]\n%[^\n]\n%[^\n]\n",
-			buff[0], buff[1], buff[2], buff[3], buff[4]) != EOF)
+	int res = 0;
+	int ing = 0;
+	while(fscanf(f, "%[^\n]\n%[^\n]\n%[^\n]\n%[^\n]\n%[^\n]\n%d\n%d\n",
+			buff[0], buff[1], buff[2], buff[3], buff[4], &res, &ing) != EOF)
 	{
 		if(ex->Reactivos == nullptr){
 		//Crea nuevo nodo raíz a base de un nuevo ejercicio 
@@ -98,7 +109,7 @@ Examen *examenCargar(string arch)
 			ex->Reactivos = newNode(
 					(generic)newEjercicio(buff[0], (string[]){
 						buff[1], buff[2],
-						buff[3], buff[4]}),
+						buff[3], buff[4]}, res),
 					nullptr, nullptr);
 		} else{
 		//Empuja un nuevo nodo en la lista de reactivos basado
@@ -107,9 +118,10 @@ Examen *examenCargar(string arch)
 			push_front(ex->Reactivos, newNode(
 				(generic)newEjercicio(buff[0], (string[]){
 					buff[1], buff[2],
-					buff[3], buff[4]}),
+					buff[3], buff[4]}, res),
 				nullptr, nullptr));
 		}
+		((Ejercicio *)front(ex->Reactivos)->data)->Ingresada = ing;
 		memset(buff, 0, sizeof(buff));
 	}
 
@@ -134,13 +146,15 @@ int examenGuardar(Examen *ex)
 		fprintf(f, "%s\n", ((Ejercicio *)curr->data)->Pregunta);
 		for(int i = 0; i < kDefaultRespuestasPorPregunta; i++)
 			fprintf(f, "%s\n", ((Ejercicio *)curr->data)->Respuesta[i]);
+		fprintf(f, "%d\n%d\n", ((Ejercicio *)curr->data)->Correcta,
+				((Ejercicio *)curr->data)->Ingresada);
 		curr = curr->head;
 	}
 	fclose(f);
 	return 1;
 }
 
-void printExamen(Examen *ex)
+void printExamen(Examen *ex, int opt)
 {
 	printf(
 		"-------------------------------------------------\n"
@@ -155,11 +169,22 @@ void printExamen(Examen *ex)
 		ex->Aciertos, ex->Puntos,    ex->Calificacion);
 
 	if(ex->Reactivos != nullptr)
-		printLinkedList(ex->Reactivos, printEjercicio);
+		printLinkedList(ex->Reactivos, printEjercicio, opt);
 }
 
 
 
+void examenCalificar(Examen *ex)
+{
+	Node *curr = back(ex->Reactivos);
+	for(int i = 0; i < ex->Puntos; i++)
+	{
+		if(((Ejercicio *)curr->data)->Correcta == ((Ejercicio *)curr->data)->Ingresada)
+			ex->Aciertos++;
+		curr = curr->head;
+	}
+	ex->Calificacion = (ex->Aciertos == 0) ? (0.0f) : (((float)ex->Aciertos / (float)ex->Puntos) * 10.0f);
+}
 /***********************************
 	     General
 ***********************************/

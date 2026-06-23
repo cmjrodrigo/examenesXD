@@ -1,11 +1,27 @@
 #include "linked_list.h"
 #include <stdlib.h>
-#include <printf.h>
 
-Node *newNode(void *data, Node *t, Node *h)
+Node *newNode(generic data, Node *t, Node *h)
 {
 	Node *root = (Node *) calloc(1, sizeof(Node));
+	root->data = data;
+	root->tail = t;
+	root->head = h;
 	return root;
+}
+
+void dNode(Node *n, dataDeleteFunc f)
+{
+	f(n->data);
+	free(n);
+}
+
+void dNodeList(Node *root, dataDeleteFunc f)
+{
+	root = back(root);
+	while(root->head != nullptr)
+		pop_front(root, f);
+	dNode(root, f);
 }
 
 void push_front(Node *root, Node *other)
@@ -26,23 +42,24 @@ void push_back(Node *root, Node *other)
 	other->head = curr;
 }
 
-void pop_front(Node *root)
+void pop_front(Node *root, dataDeleteFunc f)
 {
 	Node *curr = root;
 	while(curr->head != nullptr)
 		curr = curr->head;
 	if(curr->tail != nullptr)
 		curr->tail->head = nullptr;
-	curr->tail = nullptr;
+	dNode(curr, f);
 }
 
-void pop_back(Node *root)
+void pop_back(Node *root, dataDeleteFunc f)
 {
 	Node *curr = root;
 	while(curr->tail != nullptr)
 		curr = curr->tail;
-	curr->head->tail = nullptr;
-	curr->head = nullptr;
+	if(curr->head != nullptr)
+		curr->head->tail = nullptr;
+	dNode(curr, f);
 }
 
 Node *front(Node *root)
@@ -77,11 +94,13 @@ long long size(Node *root)
 	return count ;
 }
 
-int insert_after(Node *root, void *newVal, void *refVal)
+int insert_after(Node *root, generic newVal, generic refVal,
+		int (*dataCompare)(generic v1, generic v2))
 {
 	Node *curr = root;
-	while(curr != nullptr && curr->data != refVal){
+	while(curr != nullptr && dataCompare(curr->data, refVal)){
 		curr = curr->head;
+
 	}
 	if(curr == nullptr) return -1;
 
@@ -90,4 +109,13 @@ int insert_after(Node *root, void *newVal, void *refVal)
 	curr->head = node;
 	if (oldNext != nullptr) oldNext->tail = node;
 	return 0;
+}
+
+void printLinkedList(Node *root, void (*dataPrint)(generic d))
+{
+	Node *curr = root;
+	while(curr != nullptr){
+		dataPrint(curr->data);
+		curr = curr->head;
+	}
 }

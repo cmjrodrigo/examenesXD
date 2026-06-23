@@ -2,27 +2,51 @@
 #define EXAM_H
 #include "linked_list.h"
 
+//Types
 typedef char * string;
 
-constexpr int RespuestasPorPregunta = 4;
-
+/***********************************
+	     Ejercicios
+***********************************/
+constexpr int kDefaultRespuestasPorPregunta = 4;
 typedef struct Ejercicio{
 	string Pregunta;
-	string Respuesta;
+	string Respuesta[kDefaultRespuestasPorPregunta];
 } Ejercicio;
 
-constexpr int DefaultPuntosTotales =10;
+Ejercicio *newEjercicio(string p, string r[kDefaultRespuestasPorPregunta]);
+void delEjercicio(void *ej);
 
+void printEjercicio(generic ej);
+
+int ejercicioIgual(generic e1, generic e2);
+
+
+
+/***********************************
+	     Examen
+***********************************/
+constexpr int kDefaultPuntosTotales = 10;
+constexpr int kDefaultMinimoDeAciertos = 1;
 typedef struct Examen{
 	int Puntos;
 	int Aciertos;
-	int Calificacion;
+	float Calificacion;
 	string Titulo;
 	string Alumno;
 	string Archivo;
-	Node Reactivos;
+	Node *Reactivos;
 } Examen;
 
+Examen *newExamen(string tit, string arch);
+void delExamen(Examen *ex);
+
+Examen *exCargar(string arch);
+
+
+/***********************************
+	     General
+***********************************/
 void generarExamen();
 void modificarExamen();
 void aplicarExamen();

@@ -1,4 +1,5 @@
 #include "examen.h"
+#include "linked_list.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,7 +71,7 @@ Examen *newExamen(string arch)
 	ex->Calificacion = 0.0f;
 	ex->Titulo = nullptr;
 	ex->Alumno = nullptr;
-	ex->Archivo = arch;
+	ex->Archivo = strdup(arch);
 	ex->Reactivos = nullptr;
 	return ex;
 }
@@ -79,6 +80,7 @@ void delExamen(Examen *ex)
 {
 	free(ex->Titulo);
 	free(ex->Alumno);
+	free(ex->Archivo);
 	dNodeList(ex->Reactivos, delEjercicio);
 }
 
@@ -193,11 +195,76 @@ void generarExamen()
 	printf( "-----------------------------------------------\n"
 		"                GENERAR EXAMEN\n"
 		"-----------------------------------------------\n"
-		"Parece que de momento no hay nada aqui :O\n\n\n"
-		"(ingrese cualquier caracter para regresar)...\n");
+		"Sea usted bienvenido a la sección para generar\n"
+		"nuevos examenes :)\n\n"
+		"Para poder empezar a generar su examen, por favor\n"
+		"ingrese la dirección del archivo en el cual desea\n"
+		"que se guarde su examen.\n");
+
+	char buff[5][512] = {0};
+	scanf(" %[^\n]", buff[0]);
+
+	Examen *ex = newExamen(buff[0]);
+	memset(buff, 0, sizeof(buff));
+
+	printf("!Perfecto! su examen se guardará en:\n\t%s\n", ex->Archivo);
+
+	printf("Ahora por favor ingrese el nombre de su examen:\n");
+	scanf(" %[^\n]", buff[0]);
+	ex->Titulo = strdup(buff[0]);
+	memset(buff, 0, sizeof(buff));
+
+	printf("Ingrese ahora el número de reactivos totales en el\n"
+		"examen: ");
+	int puntos = 0;
+	while(puntos <= 0){
+		scanf("%d", &puntos);
+		if(puntos < 0)
+			printf("Por favor ingrese un valor válido de puntos (mayor a 0): ");
+	}
+	ex->Puntos = puntos;
+
+	for(int i = 0; i < ex->Puntos; i++){
+		printf("Ingrese la pregunta %d:\n", i + 1);
+		scanf(" %[^\n]", buff[0]);
+
+		for(int j = 0; j < kDefaultRespuestasPorPregunta; j++){
+			printf("\tIngrese posible respuesta %c:\n\t", 'A' + j);
+			scanf(" %[^\n]", buff[j + 1]);
+		}
+
+		printf("\tDe las respuestas ingresadas, ingrese NUMÉRICAMENTE\n"
+			"\tcuál fue la correcta: ");
+		int corr = 0;
+		scanf("%d", &corr);
+
+		if(ex->Reactivos == nullptr){
+			ex->Reactivos = newNode((generic) newEjercicio(
+						buff[0], (string []){
+							buff[1], buff[2],
+							buff[3], buff[4]
+						}, corr),
+					nullptr, nullptr);
+		} else{
+			push_front(ex->Reactivos, newNode((generic) newEjercicio(
+						buff[0], (string []){
+							buff[1], buff[2],
+							buff[3], buff[4]
+						}, corr),
+					nullptr, nullptr));
+		}
+
+		memset(buff, 0, sizeof(buff));
+	}
+
+	examenGuardar(ex);
+	printf("¡El proceso de crear su examen ha acabado!\n"
+		"Su examen se guardó en %s\n\n"
+		"(Presione cualquier tecla para continuar)\n", ex->Archivo);
 
 	char ch = ' ';
-	scanf("%c", &ch);
+	scanf(" %c", &ch);
+
 	return;
 }
 

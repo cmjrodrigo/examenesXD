@@ -1,6 +1,7 @@
 #include "examen.h"
 #include "linked_list.h"
 #include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -88,6 +89,7 @@ Examen *examenCargar(string arch)
 {
 	Examen *ex = newExamen(arch);
 	FILE *f = fopen(arch, "r");
+	assert(f != nullptr);
 
 	char buff[5][512] = {0};
 	
@@ -258,6 +260,7 @@ void generarExamen()
 	}
 
 	examenGuardar(ex);
+	delExamen(ex);
 	printf("¡El proceso de crear su examen ha acabado!\n"
 		"Su examen se guardó en %s\n\n"
 		"(Presione cualquier tecla para continuar)\n", ex->Archivo);
@@ -273,12 +276,133 @@ void modificarExamen()
 	printf( "-----------------------------------------------\n"
 		"               MODIFICAR EXAMEN\n"
 		"-----------------------------------------------\n"
-		"Parece que de momento no hay nada aqui :O\n\n\n"
-		"(ingrese cualquier caracter para regresar)...\n");
+		"¡Bienvenido a la sección de edición de exámenes!\n"
+		"Aquí podrá editar el número de preguntas, cantidad,\n"
+		"contenido, y título de cada examen.\n\n"
+		"Por favor ingrese el archivo del examen a editar:\n");
+	char buff[5][512] = {0};
+	scanf(" %[^\n]", buff[0]);
+	Examen *ex = examenCargar(buff[0]);
+	memset(buff, 0, sizeof(buff));
+	Node *curr = ex->Reactivos;
 
-	char ch = ' ';
-	scanf("%c", &ch);
-	return;
+	bool allDone = false;
+	while(!allDone){
+
+		printf("\n\nIngrese la opcion que quiera realizar:\n"
+			"\t1)Ver examen completo\n"
+			"\t2)Pregunta pasada\n"
+			"\t3)Ver pregunta actual\n"
+			"\t4)Siguiente pregunta\n"
+			"\t5)Agregar preguntas\n"
+			"\t6)Modificar pregunta actual\n"
+			"\t7)Cambiar título\n"
+			"\t...)Salir y guardar\n");
+
+		ex->Puntos = size(ex->Reactivos);
+
+		int opcion = 0;
+		scanf("%d", &opcion);
+
+		switch(opcion){
+			//Ver examen
+			case 1:{
+				printExamen(ex, OPT_PROFESOR);
+				printf("Inserte cualquier caracter para continuar: ");
+				char ch;
+				scanf(" %c", &ch);
+			break;}
+
+			//Pregunta pasada
+			case 2:{
+				if(curr->tail != nullptr)
+					curr = curr->tail;
+			break;}
+
+			//Pregunta actual
+			case 3:{
+				printEjercicio(((Ejercicio *)curr->data), OPT_PROFESOR);
+				printf("Inserte cualquier caracter para continuar: ");
+				char ch;
+				scanf(" %c", &ch);
+			break;}
+
+			//Pregunta siguente
+			case 4:{
+				if(curr->head != nullptr)
+					curr = curr->head;
+			break;}
+
+			//Agregar preguntas
+			case 5:{
+				printf("Ingrese la pregunta:\n");
+				scanf(" %[^\n]", buff[0]);
+
+				for(int j = 0; j < kDefaultRespuestasPorPregunta; j++){
+					printf("\tIngrese posible respuesta %c:\n\t", 'A' + j);
+					scanf(" %[^\n]", buff[j + 1]);
+				}
+
+				printf("\tDe las respuestas ingresadas, ingrese NUMÉRICAMENTE\n"
+					"\tcuál fue la correcta: ");
+				int corr = 0;
+				scanf("%d", &corr);
+
+				push_front(curr, newNode((generic) newEjercicio(
+							buff[0], (string []){
+								buff[1], buff[2],
+								buff[3], buff[4]
+							}, corr),
+						nullptr, nullptr));
+				ex->Puntos++;
+				memset(buff, 0, sizeof(buff));
+			break;}
+
+			//Modificar preguntas
+			case 6:{
+				printf("Ingrese la nueva pregunta:\n");
+				scanf(" %[^\n]", buff[0]);
+
+				for(int j = 0; j < kDefaultRespuestasPorPregunta; j++){
+					printf("\tIngrese las nueva posible respuesta %c:\n\t", 'A' + j);
+					scanf(" %[^\n]", buff[j + 1]);
+				}
+
+				printf("\tDe las respuestas ingresadas, ingrese NUMÉRICAMENTE\n"
+					"\tcuál fue la nueva respuesta correcta: ");
+				int corr = 0;
+				scanf("%d", &corr);
+				((Ejercicio *)curr->data)->Correcta = corr;
+
+				free(((Ejercicio *)curr->data)->Pregunta);
+				((Ejercicio *)curr->data)->Pregunta = strdup(buff[0]);
+
+				for(int i = 0; i < kDefaultRespuestasPorPregunta; i++){
+					free(((Ejercicio *)curr->data)->Respuesta[i]);
+					((Ejercicio *)curr->data)->Respuesta[i] = strdup(buff[1 + i]);
+				}
+
+				memset(buff, 0, sizeof(buff));
+			break;
+			break;}
+
+			//Cambiar título
+			case 7:{
+				free(ex->Titulo);
+				printf("Ingrese el nuevo título del examen:\n\t");
+				scanf(" %[^\n]", buff[0]);
+				ex->Titulo = strdup(buff[0]);
+				memset(buff, 0, sizeof(buff));
+			break;}
+			
+			//Salir y guardar
+			default:{
+				examenGuardar(ex);
+				delExamen(ex);
+				allDone = true;
+			break;}
+		}
+	}
 }
 
 void aplicarExamen()
@@ -286,10 +410,60 @@ void aplicarExamen()
 	printf( "-----------------------------------------------\n"
 		"               APLICAR EXAMEN\n"
 		"-----------------------------------------------\n"
-		"Parece que de momento no hay nada aqui :O\n\n\n"
-		"(ingrese cualquier caracter para regresar)...\n");
+		"Esta es la opción de aplicar exámenes. Por favor\n"
+		"escriba el nombre del archivo del examen a realizar.\n");
+	char buff[512] = {0};
+	scanf(" %[^\n]", buff);
+	Examen *ex = examenCargar(buff);
+	memset(buff, 0, sizeof(buff));
+	Node *curr = ex->Reactivos;
 
-	char ch = ' ';
-	scanf("%c", &ch);
+	printf("Mucha suerte realizando el examen!\n");
+
+	printf(
+		"-------------------------------------------------\n"
+		"%s\n"
+		"-------------------------------------------------\n"
+		"Nombre:",
+		ex->Titulo);
+	scanf(" %[^\n]", buff);
+	ex->Alumno = strdup(buff);
+	memset(buff, 0, sizeof(buff));
+
+	printf("PREGUNTAS:\n"
+		"-------------------------------------------------\n");
+
+	while(curr != nullptr){
+		printEjercicio(((Ejercicio *) curr->data), OPT_ALUMNO);
+		printf("RESPUESTA(A, B, C, D): ");
+		char ch = 0;
+		scanf(" %c", &ch);
+		((Ejercicio *)curr->data)->Ingresada = ch - 'A' + 1;
+		curr = curr->head;
+	}
+	examenCalificar(ex);
+
+	printf("SU CALIFICACIÓN ES DE: %.1f\n", ex->Calificacion);
+	sprintf(buff, "%s_AL%s", ex->Archivo, ex->Alumno);
+	free(ex->Archivo);
+	ex->Archivo = strdup(buff);
+	memset(buff, 0, sizeof(buff));
+	examenGuardar(ex);
+	delExamen(ex);
 	return;
+}
+
+void revisarExamen()
+{
+	printf( "-----------------------------------------------\n"
+		"               REVISAR EXAMEN\n"
+		"-----------------------------------------------\n"
+		"Esta es la herramienta para revisar examenes de\n"
+		"alumnos. Por favor ingrese el archivo del examen:\n");
+	char buff[512];
+	scanf(" %[^\n]", buff);
+	Examen *ex = examenCargar(buff);
+	memset(buff, 0, sizeof(buff));
+	printExamen(ex, OPT_PROFESOR);
+	delExamen(ex);
 }

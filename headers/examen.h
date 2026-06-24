@@ -57,5 +57,6 @@ void examenCalificar(Examen *ex);
 void generarExamen();
 void modificarExamen();
 void aplicarExamen();
+void revisarExamen();
 
 #endif

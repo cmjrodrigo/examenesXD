@@ -12,6 +12,7 @@ int main()
 			"	1) Generar examen\n"
 			"	2) Modificar examen\n"
 			"	3) Aplicar examen\n"
+			"	4) Revisar examen\n"
 			"	...) Salir\n\n");
 
 		int opcion = 0;
@@ -23,6 +24,8 @@ int main()
 			modificarExamen();
 		} else if(opcion == 3){
 			aplicarExamen();
+		} else if(opcion == 4){
+			revisarExamen();
 		} else{
 			shouldExit = true;
 		}
